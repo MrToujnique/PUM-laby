@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">lab4</string>
+    <string name="sms">SMS</string>
+    <string name="pn">Numer telefonu</string>
+    <string name="send">Wyślij</string>
+    <string name="receive">Otrzymaj</string>
+    <string name="message">Otrzymana wiadomość SMS</string>
+    <string name="contacts">Kontakty</string>
+</resources>
