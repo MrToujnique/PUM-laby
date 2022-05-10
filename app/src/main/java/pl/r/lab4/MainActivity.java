@@ -4,10 +4,13 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -52,11 +55,31 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_SEND_SMS = 123;
     private static final int PERMISSION_RECEIVE_SMS = 124;
 
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            NotificationChannel okChannel = new NotificationChannel("SMS_SENT", "SMS_SENT", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel genericChannel = new NotificationChannel("GENERIC_FAIL", "GENERIC_FAIL", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel noServiceChannel = new NotificationChannel("NO_SERVICE", "NO_SERVICE", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel nullPDUChannel = new NotificationChannel("NULL_PDU", "NULL_PDU", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel radioOffChannel = new NotificationChannel("RADIO_OFF", "RADIO_OFF", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel receivedChannel = new NotificationChannel("SMS_RECEIVED", "SMS_RECEIVED", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationChannel canceledChannel = new NotificationChannel("SMS_CANCELED", "SMS_CANCELED", NotificationManager.IMPORTANCE_DEFAULT);
+            NotificationManager manager = getSystemService(NotificationManager.class);
+            manager.createNotificationChannel(okChannel);
+            manager.createNotificationChannel(genericChannel);
+            manager.createNotificationChannel(noServiceChannel);
+            manager.createNotificationChannel(nullPDUChannel);
+            manager.createNotificationChannel(radioOffChannel);
+            manager.createNotificationChannel(receivedChannel);
+            manager.createNotificationChannel(canceledChannel);
+        }
 
         if (checkSelfPermission(Manifest.permission.READ_CONTACTS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -145,18 +168,42 @@ public class MainActivity extends AppCompatActivity {
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         Toast.makeText(getBaseContext(), "SMS wysłany", Toast.LENGTH_SHORT).show();
+                        NotificationCompat.Builder okNotification = new NotificationCompat.Builder(MainActivity.this, "SMS_SENT");
+                        okNotification.setContentTitle("Wysłano SMS na nr: " + phoneNumber);
+                        okNotification.setContentText("Treść: " + message);
+                        okNotification.setSmallIcon(R.drawable.ic_launcher_background);
+                        okNotification.setAutoCancel(true);
+                        NotificationManagerCompat managerCompat = NotificationManagerCompat.from(MainActivity.this);
+                        managerCompat.notify(1, okNotification.build());
                         break;
                     case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
                         Toast.makeText(getBaseContext(), "Błąd generyczny", Toast.LENGTH_SHORT).show();
+                        NotificationCompat.Builder genericNotification = new NotificationCompat.Builder(MainActivity.this, "GENERIC_FAIL");
+                        genericNotification.setContentTitle("Wystąpił błąd generyczny przy wysyłaniu SMS");
+                        genericNotification.setAutoCancel(true);
+
+                        //managerCompat.notify(2, genericNotification.build());
                         break;
                     case SmsManager.RESULT_ERROR_NO_SERVICE:
                         Toast.makeText(getBaseContext(), "Brak usługi", Toast.LENGTH_SHORT).show();
+                        NotificationCompat.Builder noServiceNotification = new NotificationCompat.Builder(MainActivity.this, "NO_SERVICE");
+                        noServiceNotification.setContentTitle("Brak usługi SMS");
+                        noServiceNotification.setAutoCancel(true);
+                        //managerCompat.notify(3, noServiceNotification.build());
                         break;
                     case SmsManager.RESULT_ERROR_NULL_PDU:
                         Toast.makeText(getBaseContext(), "Null PDU", Toast.LENGTH_SHORT).show();
+                        NotificationCompat.Builder nullPDUNotification = new NotificationCompat.Builder(MainActivity.this, "NULL_PDU");
+                        nullPDUNotification.setContentTitle("Null PDU");
+                        nullPDUNotification.setAutoCancel(true);
+                        //managerCompat.notify(4, nullPDUNotification.build());
                         break;
                     case SmsManager.RESULT_ERROR_RADIO_OFF:
                         Toast.makeText(getBaseContext(), "Radio wyl.", Toast.LENGTH_SHORT).show();
+                        NotificationCompat.Builder radioOffNotification = new NotificationCompat.Builder(MainActivity.this, "RADIO_OFF");
+                        radioOffNotification.setContentTitle("Radio wyl.");
+                        radioOffNotification.setAutoCancel(true);
+                        //managerCompat.notify(5, radioOffNotification.build());
                         break;
                 }
 
@@ -169,9 +216,18 @@ public class MainActivity extends AppCompatActivity {
                 switch (getResultCode()) {
                     case Activity.RESULT_OK:
                         Toast.makeText(getBaseContext(), "SMS dostarczony", Toast.LENGTH_SHORT).show();
+                        NotificationCompat.Builder receivedNotification = new NotificationCompat.Builder(MainActivity.this, "SMS_RECEIVED");
+                        receivedNotification.setContentTitle("Dostarczono SMS na nr: " + phoneNumber);
+                        receivedNotification.setContentText("Treść: " + message);
+                        receivedNotification.setAutoCancel(true);
+                        //managerCompat.notify(6, receivedNotification.build());
                         break;
                     case Activity.RESULT_CANCELED:
                         Toast.makeText(getBaseContext(), "SMS anulowany", Toast.LENGTH_SHORT).show();
+                        NotificationCompat.Builder canceledNotification = new NotificationCompat.Builder(MainActivity.this, "SMS_CANCELED");
+                        canceledNotification.setContentTitle("SMS anulowany");
+                        canceledNotification.setAutoCancel(true);
+                        //managerCompat.notify(7, canceledNotification.build());
                         break;
                 }
             }
