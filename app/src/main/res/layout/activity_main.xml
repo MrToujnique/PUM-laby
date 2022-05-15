@@ -39,12 +39,28 @@
         android:text="@string/send" />
 
     <Button
+        android:id="@+id/showActivitiesButton"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginRight="32dp"
+        android:text="@string/activities" />
+
+    <Button
         android:id="@+id/contactsButton"
         android:layout_width="match_parent"
         android:layout_height="71dp"
         android:layout_marginLeft="32dp"
         android:layout_marginRight="32dp"
         android:text="@string/contacts" />
+
+    <Button
+        android:id="@+id/barCodeButton"
+        android:layout_width="match_parent"
+        android:layout_height="71dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginRight="32dp"
+        android:text="@string/barcode" />
 
     <TextView
         android:text="@string/message"

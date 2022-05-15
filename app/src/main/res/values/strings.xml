@@ -6,4 +6,6 @@
     <string name="receive">Otrzymaj</string>
     <string name="message">Otrzymana wiadomość SMS</string>
     <string name="contacts">Kontakty</string>
+    <string name="barcode">Kod kreskowy</string>
+    <string name="activities">Dodatkowe aktywności</string>
 </resources>

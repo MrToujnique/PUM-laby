@@ -1,5 +1,8 @@
 package pl.r.lab4;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -9,6 +12,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -17,6 +21,7 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 
@@ -39,6 +44,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+import com.journeyapps.barcodescanner.CaptureActivity;
+
+import java.sql.SQLOutput;
 import java.util.Arrays;
 
 public class MainActivity extends AppCompatActivity {
@@ -46,6 +56,8 @@ public class MainActivity extends AppCompatActivity {
     Button smsSend;
     TextView smsReceive;
     Button contacts;
+    Button barCode;
+    Button activities;
 
     String asimuth="";
 
@@ -55,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int PERMISSION_READ_CONTACT = 122;
     private static final int PERMISSION_SEND_SMS = 123;
     private static final int PERMISSION_RECEIVE_SMS = 124;
+    private static final int RESULT_SCAN_CODE = 49374;
 
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -107,6 +120,25 @@ public class MainActivity extends AppCompatActivity {
         phoneNumber = (EditText) findViewById(R.id.et_phone);
         sms = (EditText) findViewById(R.id.et_sms);
         contacts = (Button) findViewById(R.id.contactsButton);
+        barCode = (Button) findViewById(R.id.barCodeButton);
+        activities = (Button) findViewById(R.id.showActivitiesButton);
+
+        contacts.setVisibility(GONE);
+        barCode.setVisibility(GONE);
+
+        activities.setOnClickListener(view -> {
+            if((contacts.getVisibility() == GONE) && (barCode.getVisibility() == GONE))
+            {
+                contacts.setVisibility(VISIBLE);
+                barCode.setVisibility(VISIBLE);
+            }
+            else if ((contacts.getVisibility() == VISIBLE) && (barCode.getVisibility() == VISIBLE))
+            {
+                contacts.setVisibility(GONE);
+                barCode.setVisibility(GONE);
+            }
+        });
+
 
         contacts.setOnClickListener(new View.OnClickListener () {
             @Override
@@ -117,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
         });
         smsSend.setOnClickListener(view -> sendSMS(phoneNumber.getText().toString(),sms.getText() +asimuth.toString()));
 
+        barCode.setOnClickListener(view -> scanCode());
 
         SensorManager mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         Sensor mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -252,17 +285,45 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode,  Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
+        //System.out.println("ResultCode: " + resultCode);
         if (resultCode == RESULT_OK) {
             switch (requestCode) {
                 case RESULT_PICK_CONTACT:
                     contactPicked(data);
                     break;
+                case RESULT_SCAN_CODE:
+                    IntentResult result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
+                    if (result != null) {
+                        if (result.getContents() != null) {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                            builder.setMessage(result.getContents());
+                            builder.setTitle("Wyniki skanowania");
+                            builder.setPositiveButton("Skanuj ponownie", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    scanCode();
+                                }
+                            }).setNegativeButton("Umieść w SMS", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialogInterface, int i) {
+                                    sms.append("Kod kreskowy: " + result.getContents());
+                                    //finish();
+                                }
+                            });
+                            AlertDialog dialog = builder.create();
+                            dialog.show();
+                        }
+                        else {
+                            Toast.makeText(this, "Brak wyników", Toast.LENGTH_LONG).show();
+                        }
+                    } else {
+                        super.onActivityResult(requestCode, resultCode, data);
+                    }
+                    break;
             }
-        } else {
-            Toast.makeText(this, "Nie udalo sie wybrac kontaktu.", Toast.LENGTH_SHORT).show();
         }
-    }
+        }
+
 
     private void contactPicked(Intent data) {
         Cursor cursor = null;
@@ -281,5 +342,14 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             e.printStackTrace ();
         }
+    }
+
+    public void scanCode() {
+        IntentIntegrator integrator = new IntentIntegrator(this);
+        integrator.setCaptureActivity(CaptureActivity.class);
+        integrator.setOrientationLocked(false);
+        integrator.setDesiredBarcodeFormats(IntentIntegrator.ALL_CODE_TYPES);
+        integrator.setPrompt("Skanowanie kodu");
+        integrator.initiateScan();
     }
 }
